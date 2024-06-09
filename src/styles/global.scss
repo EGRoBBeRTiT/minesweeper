@@ -1,0 +1,117 @@
+/* stylelint-disable selector-max-id */
+:root {
+    /* Colors rgb */
+    --primary-color-rgb: 0 106 255; // #006aff
+
+    /* Colors */
+    --primary-color: rgb(var(--primary-color-rgb));
+    --header-background: var(--primary-color);
+    --primary-cell-color: #2298ff;
+    --secondary-cell-color: #38a2ff;
+    --primary-opened-cell-color: #d7b899;
+    --secondary-opened-cell-color: #e5c29f;
+    --cell-hover-color: #5ab2ff;
+    --header-height: 64px;
+    --header-z-index: 100;
+    --main-padding: 24px;
+    --text-color-1: #1976d2;
+    --text-color-2: #388e3c;
+    --text-color-3: #d32f2f;
+    --text-color-4: #7b1fa2;
+    --text-color-5: #ff8f00;
+    --text-color-6: #fbff00;
+    --text-color-7: #6200ff;
+    --text-color-8: #fb00ff;
+    --flag-color: #e63307;
+    --flag-handle-color: #6c3c0d;
+    --mine-color: #000000;
+    --mine-color-red: #ce2900;
+}
+
+html {
+    /* плашка-бегунок и фон */
+
+    &::-webkit-scrollbar {
+        width: 6px; /* в основном для вертикальных полос прокрутки */
+        height: 6px; /* в основном для горизонтальных полос прокрутки */
+    }
+
+    &::-webkit-scrollbar-thumb {
+        /* плашка-бегунок */
+        background: rgb(var(--primary-color-rgb) / 60%);
+        border-radius: 8px;
+    }
+
+    &:-webkit-scrollbar-track {
+        /* фон */
+        background: transparent;
+    }
+
+    scrollbar-color: rgb(var(--primary-color-rgb) / 60%) transparent;
+}
+
+html,
+body {
+    position: fixed;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    -ms-scroll-chaining: none;
+    overscroll-behavior-x: none;
+
+    * {
+        box-sizing: border-box;
+    }
+}
+
+body {
+    // background-color: var(--secondary-cell-color);
+    background-color: #d7b899;
+}
+
+.root {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100dvh;
+}
+
+.container {
+    width: 100%;
+    height: 100%;
+    padding: var(--main-padding);
+}
+
+#canvas-container {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    min-width: 100%;
+    min-height: 100%;
+    overflow: visible;
+}
+
+.header {
+    position: relative;
+    z-index: var(--header-z-index);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: var(--header-height);
+    background-color: var(--header-background);
+
+    h1 {
+        margin: 0;
+        padding: 0;
+    }
+}
+
+canvas {
+    position: absolute;
+
+    &:last-of-type {
+        outline: 2px solid var(--primary-color);
+        box-shadow: rgb(0 0 0 / 35%) 0 5px 15px;
+    }
+}

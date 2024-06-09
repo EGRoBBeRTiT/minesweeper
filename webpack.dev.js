@@ -35,12 +35,6 @@ module.exports = merge(common, {
                         },
                     },
                     'sass-loader',
-                    {
-                        loader: 'sass-resources-loader',
-                        options: {
-                            resources: ['./src/styles/mixins.scss'],
-                        },
-                    },
                 ],
             },
         ],

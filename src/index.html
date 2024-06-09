@@ -9,8 +9,17 @@
     <meta name="description" content="Minesweeper — это браузерная игра в сапера">
 </head>
 <body>
-    <div id="root"></div>
-    HELLO WORLD
+    <div class="root">
+        <header class="header">
+            <h1>Minesweeper</h1>
+            <button id="start-button">Start</button>
+            <button id="restart-button">Restart</button>
+            <button id="redraw-button">Redraw</button>
+        </header>
+        <div class="container">
+            <div id="canvas-container"></div>
+        </div>
+    </div>
     <noscript>
         С отключенным JavaScript игра не сможет работать
     </noscript>

@@ -64,8 +64,8 @@ const rules = {
     'jsdoc/require-param-type': 'off',
     'jsdoc/require-returns-type': 'off',
     'no-continue': 'off',
-    'import/no-cycle': 'error',
     '@typescript-eslint/no-unsafe-enum-comparison': 'off',
+    'import/no-cycle': 'error',
 };
 
 module.exports = {
@@ -179,7 +179,19 @@ module.exports = {
                         ],
                     },
                 ],
+                'import/no-cycle': 'error',
             },
         },
     ],
+    settings: {
+        'import/parsers': {
+            '@typescript-eslint/parser': ['.ts', '.tsx'],
+        },
+        'import/resolver': {
+            typescript: {
+                alwaysTryTypes: true,
+                project: './tsconfig.json',
+            },
+        },
+    },
 };
