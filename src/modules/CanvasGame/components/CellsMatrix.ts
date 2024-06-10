@@ -1,5 +1,5 @@
 import { BigMap } from '@/library';
-import { CanvasCell } from '@/modules/CanvasGame/components/CanvasCell';
+import { Cell } from '@/modules/CanvasGame/components/Cell';
 import { XYToPosition } from '@/modules/utils';
 import { isDefined } from '@/utils';
 
@@ -23,7 +23,7 @@ export class CellsMatrix {
 
     cellSize: number;
 
-    map = new BigMap<CanvasCell>();
+    map = new BigMap<Cell>();
 
     firstColor?: string;
 
@@ -50,7 +50,7 @@ export class CellsMatrix {
             for (let j = 0; j < this.cellsPerColum; ++j) {
                 this.map.set(
                     XYToPosition(i, j, this.cellsPerRow),
-                    new CanvasCell(
+                    new Cell(
                         i * this.cellSize,
                         j * this.cellSize,
                         this.cellSize,

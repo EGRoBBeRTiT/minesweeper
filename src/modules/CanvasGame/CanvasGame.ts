@@ -1,16 +1,18 @@
-import { Canvas } from '@/components/Canvas';
 import { debounce, isDefined, throttle } from '@/utils';
-import type { CanvasCell } from '@/modules/CanvasGame/components/CanvasCell';
+import type { Cell } from '@/modules/CanvasGame/components/Cell';
 import {
     XYToPosition,
     getCellCoordinates,
     positionToXY,
 } from '@/modules/utils';
-import { Flag } from '@/components/Flag';
 import { BigMap } from '@/library';
 import { styleVariable } from '@/shared/constants';
 import { IndexDB } from '@/library/IndexDB';
 import { IndexDBKey } from '@/types/IndexDB.types';
+import { Canvas } from '@/modules/CanvasGame/components/Canvas';
+import { Flag } from '@/modules/CanvasGame/components/Flag';
+import { defineProperties } from '@/modules/CanvasGame/utils/defineProperties';
+import { translateCanvases } from '@/modules/CanvasGame/utils/translateCanvases';
 
 import {
     drawAllEmptyCells,
@@ -23,15 +25,7 @@ import {
     openCell,
     setOpenedCell,
 } from './utils';
-import {
-    ANIMATION_CANVAS_ID,
-    CANVAS_CONTAINER_ID,
-    HOVER_CANVAS_ID,
-    MAIN_CANVAS_ID,
-    MARKED_CELLS_CANVAS_ID,
-    OPENED_BG_CELLS_CANVAS_ID,
-    OPENED_CELLS_CANVAS_ID,
-} from './CanvasGame.constants';
+import { CANVAS_CONTAINER_ID } from './CanvasGame.constants';
 
 export type MinesPositionsMatrix = ((boolean | undefined)[] | undefined)[];
 
@@ -43,16 +37,25 @@ interface AnimationCell {
 }
 
 class CanvasGame {
+    /** canvas для отображения неоткрытых ячеек */
     protected mainCanvas = new Canvas();
 
+    /** canvas для отображения ховера */
     protected hoverCanvas = new Canvas();
 
+    /**
+     * canvas для отображения ячеек,
+     * имитирующих границу вокруг открытых ячеек
+     */
     protected openedBgCellsCanvas = new Canvas();
 
+    /** canvas для отображения открытых ячеек */
     protected openedCellsCanvas = new Canvas();
 
+    /** canvas для отображения флажков */
     protected markedCellsCanvas = new Canvas();
 
+    /** canvas для отображения анимации */
     protected animationCanvas = new Canvas();
 
     protected cellSize = 0;
@@ -75,23 +78,26 @@ class CanvasGame {
 
     protected animatingCells = new BigMap<AnimationCell>();
 
-    protected firstOpenedCell = Number.NaN;
-
+    /** Позиция заминированной ячейки, которую нажали  */
     protected minedCellPosition = Number.NaN;
 
     protected minesCount = 0;
 
     protected openedCellsCount = 0;
 
+    /** Минимальная видимая позиция по X  */
     protected minX = 0;
 
+    /** Максимальная видимая позиция по X  */
     protected maxX = 0;
 
+    /** Минимальная видимая позиция по Y  */
     protected minY = 0;
 
+    /** Максимальная видимая позиция по Y  */
     protected maxY = 0;
 
-    protected hoveredCell?: CanvasCell | null = null;
+    protected hoveredCell?: Cell | null = null;
 
     protected gameOvered = false;
 
@@ -102,22 +108,20 @@ class CanvasGame {
     protected timeIntervalId: ReturnType<typeof setInterval> | number =
         Number.NaN;
 
-    protected saveGameStorage: IndexDB;
+    protected saveGameStorage: IndexDB = new IndexDB(
+        IndexDBKey.STORE_NAME,
+        IndexDBKey.VERSION,
+        IndexDBKey.DB_NAME,
+        IndexDBKey.KEY_PATH,
+    );
 
     public readyState: 'ready' | 'loading' = 'loading';
 
-    private loadFromStorage = false;
+    protected loadFromStorage = false;
 
     public loadState: 'from-storage' | 'new' = 'new';
 
     constructor() {
-        this.saveGameStorage = new IndexDB(
-            IndexDBKey.STORE_NAME,
-            IndexDBKey.VERSION,
-            IndexDBKey.DB_NAME,
-            IndexDBKey.KEY_PATH,
-        );
-
         const storage = this.saveGameStorage;
 
         void Promise.all([
@@ -205,88 +209,35 @@ class CanvasGame {
         }
     }
 
+    protected getXYCanvasTransform() {
+        const transform = this.mainCanvas.context?.getTransform();
+
+        return [transform?.e ?? 0, transform?.f ?? 0] as const;
+    }
+
+    protected getCanvases() {
+        return [
+            this.mainCanvas,
+            this.hoverCanvas,
+            this.markedCellsCanvas,
+            this.openedBgCellsCanvas,
+            this.openedCellsCanvas,
+            this.animationCanvas,
+        ];
+    }
+
     private defineProperties(
         cellsPerRow: number,
         cellsPerColumn: number,
         minesCount: number,
         minCellSize = 40,
     ) {
-        this.cellsPerRow = cellsPerRow;
-        this.cellsPerColumn = cellsPerColumn;
-        this.minCellSize = minCellSize;
-        this.minesCount = Math.min(
-            Math.max(minesCount, 2),
-            cellsPerRow * cellsPerColumn - 1,
-        );
-
-        if (!this.loadFromStorage) {
-            this.openedCells = Array.from(
-                { length: this.cellsPerRow },
-                () => [],
-            );
-        }
-
-        const canvasContainer = document.getElementById(CANVAS_CONTAINER_ID);
-
-        const containerWidth = canvasContainer?.clientWidth ?? 0;
-        const containerHeight = canvasContainer?.clientHeight ?? 0;
-
-        const cellWidth = containerWidth / cellsPerRow;
-        const cellHeight = containerHeight / cellsPerColumn;
-
-        this.cellSize = Math.max(
-            Math.floor(Math.min(cellWidth, cellHeight)),
+        defineProperties.call(
+            this,
+            cellsPerRow,
+            cellsPerColumn,
+            minesCount,
             minCellSize,
-        );
-
-        this.cellSize =
-            this.cellSize % 2 === 0 ? this.cellSize : this.cellSize - 1;
-
-        this.cellsWidth = this.cellSize * this.cellsPerRow;
-        this.cellsHeight = this.cellSize * this.cellsPerColumn;
-
-        const canvasWidth = Math.min(
-            this.cellSize * cellsPerRow,
-            containerWidth,
-        );
-        const canvasHeight = Math.min(
-            this.cellSize * cellsPerColumn,
-            containerHeight,
-        );
-
-        this.maxX = Math.ceil(canvasWidth / this.cellSize) - 1;
-        this.maxY = Math.ceil(canvasHeight / this.cellSize) - 1;
-
-        this.mainCanvas = new Canvas(MAIN_CANVAS_ID, canvasWidth, canvasHeight);
-
-        this.hoverCanvas = new Canvas(
-            HOVER_CANVAS_ID,
-            canvasWidth,
-            canvasHeight,
-        );
-
-        this.openedBgCellsCanvas = new Canvas(
-            OPENED_BG_CELLS_CANVAS_ID,
-            canvasWidth,
-            canvasHeight,
-        );
-
-        this.openedCellsCanvas = new Canvas(
-            OPENED_CELLS_CANVAS_ID,
-            canvasWidth,
-            canvasHeight,
-        );
-
-        this.markedCellsCanvas = new Canvas(
-            MARKED_CELLS_CANVAS_ID,
-            canvasWidth,
-            canvasHeight,
-        );
-
-        this.animationCanvas = new Canvas(
-            ANIMATION_CANVAS_ID,
-            canvasWidth,
-            canvasHeight,
         );
     }
 
@@ -318,10 +269,7 @@ class CanvasGame {
     };
 
     private handleMouseMove = throttle((e?: MouseEvent) => {
-        const transform = this.mainCanvas.context?.getTransform();
-
-        const x = transform?.e ?? 0;
-        const y = transform?.f ?? 0;
+        const [x, y] = this.getXYCanvasTransform();
 
         this.hoverCell((e?.offsetX ?? 0) - x, (e?.offsetY ?? 0) - y);
     }, 30);
@@ -348,10 +296,7 @@ class CanvasGame {
         e.preventDefault();
         e.stopPropagation();
 
-        const transform = this.mainCanvas.context?.getTransform();
-
-        const x = transform?.e ?? 0;
-        const y = transform?.f ?? 0;
+        const [x, y] = this.getXYCanvasTransform();
 
         const offsetX = (e?.offsetX ?? 0) - x;
         const offsetY = (e?.offsetY ?? 0) - y;
@@ -477,12 +422,9 @@ class CanvasGame {
             minCellSize,
         );
 
-        this.mainCanvas.insertIntoElement(CANVAS_CONTAINER_ID);
-        this.hoverCanvas.insertIntoElement(CANVAS_CONTAINER_ID);
-        this.markedCellsCanvas.insertIntoElement(CANVAS_CONTAINER_ID);
-        this.openedBgCellsCanvas.insertIntoElement(CANVAS_CONTAINER_ID);
-        this.openedCellsCanvas.insertIntoElement(CANVAS_CONTAINER_ID);
-        this.animationCanvas.insertIntoElement(CANVAS_CONTAINER_ID);
+        this.getCanvases().forEach((canvas) => {
+            canvas.insertIntoElement(CANVAS_CONTAINER_ID);
+        });
 
         this.drawAll();
 
@@ -553,7 +495,7 @@ class CanvasGame {
         });
     }
 
-    private setTransform(
+    protected setTransform(
         a: number,
         b: number,
         c: number,
@@ -561,45 +503,13 @@ class CanvasGame {
         e: number,
         f: number,
     ) {
-        this.mainCanvas.context?.setTransform(a, b, c, d, e, f);
-        this.hoverCanvas.context?.setTransform(a, b, c, d, e, f);
-        this.markedCellsCanvas.context?.setTransform(a, b, c, d, e, f);
-        this.openedBgCellsCanvas.context?.setTransform(a, b, c, d, e, f);
-        this.openedCellsCanvas.context?.setTransform(a, b, c, d, e, f);
-        this.animationCanvas.context?.setTransform(a, b, c, d, e, f);
+        this.getCanvases().forEach((canvas) => {
+            canvas.context?.setTransform(a, b, c, d, e, f);
+        });
     }
 
     private translateCanvases(deltaX: number, deltaY: number) {
-        const transform = this.mainCanvas.context?.getTransform();
-
-        const currentX = transform?.e ?? 0;
-        const currentY = transform?.f ?? 0;
-
-        const translateX = -deltaX;
-        const translateY = -deltaY;
-
-        const maxScrollX = this.mainCanvas.canvas.width - this.cellsWidth;
-        const maxScrollY = this.mainCanvas.canvas.height - this.cellsHeight;
-
-        const nextX = currentX + translateX;
-        const nextY = currentY + translateY;
-
-        const transformX = Math.min(Math.max(nextX, maxScrollX), 0);
-        const transformY = Math.min(Math.max(nextY, maxScrollY), 0);
-
-        const [minX, minY] = this.getCellCoordinates(-transformX, -transformY);
-
-        const [maxX, maxY] = this.getCellCoordinates(
-            this.mainCanvas.canvas.width - transformX - 1,
-            this.mainCanvas.canvas.height - transformY - 1,
-        );
-
-        this.minX = minX;
-        this.minY = minY;
-        this.maxX = maxX;
-        this.maxY = maxY;
-
-        this.setTransform(1, 0, 0, 1, transformX, transformY);
+        translateCanvases.call(this, deltaX, deltaY);
     }
 
     private clearAll() {
@@ -654,7 +564,6 @@ class CanvasGame {
 
         this.openedCells = Array.from({ length: this.cellsPerRow }, () => []);
         this.minesPositions = [];
-        this.firstOpenedCell = Number.NaN;
         this.minedCellPosition = Number.NaN;
         this.requestAnimationId = Number.NaN;
         this.gameOvered = false;
@@ -773,12 +682,10 @@ class CanvasGame {
         this.stop();
         this.resetState();
 
-        this.mainCanvas.destroy();
-        this.hoverCanvas.destroy();
-        this.markedCellsCanvas.destroy();
-        this.openedBgCellsCanvas.destroy();
-        this.openedCellsCanvas.destroy();
-        this.animationCanvas.destroy();
+        this.getCanvases().forEach((canvas) => {
+            canvas.destroy();
+        });
+
         this.resetSave();
     }
 }

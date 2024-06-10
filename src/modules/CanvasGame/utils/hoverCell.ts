@@ -1,5 +1,5 @@
 import type { CanvasGameType } from '@/modules/CanvasGame/CanvasGame';
-import { CanvasCell } from '@/modules/CanvasGame/components/CanvasCell';
+import { Cell } from '@/modules/CanvasGame/components/Cell';
 import { styleVariable } from '@/shared/constants';
 
 /**
@@ -21,7 +21,7 @@ export function hoverCell(
             this.clearHoverArea();
             this.hoveredCell = cell;
 
-            const hoveredCell = new CanvasCell(
+            const hoveredCell = new Cell(
                 cell.x,
                 cell.y,
                 cell.width,

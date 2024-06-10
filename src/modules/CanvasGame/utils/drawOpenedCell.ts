@@ -1,5 +1,5 @@
 import type { CanvasGameType } from '@/modules/CanvasGame/CanvasGame';
-import { CanvasCell } from '@/modules/CanvasGame/components/CanvasCell';
+import { Cell } from '@/modules/CanvasGame/components/Cell';
 import { styleVariable } from '@/shared/constants';
 
 /**
@@ -23,7 +23,7 @@ export function drawOpenedCell(this: CanvasGameType, x: number, y: number) {
 
         const lineWidth = Math.round(this.cellSize / 16);
 
-        const bgCell = new CanvasCell(
+        const bgCell = new Cell(
             cell.x - lineWidth,
             cell.y - lineWidth,
             cell.width + lineWidth * 2,

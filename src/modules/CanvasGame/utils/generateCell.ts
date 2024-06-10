@@ -1,5 +1,5 @@
 import type { CanvasGameType } from '@/modules/CanvasGame/CanvasGame';
-import { CanvasCell } from '@/modules/CanvasGame/components/CanvasCell';
+import { Cell } from '@/modules/CanvasGame/components/Cell';
 
 /**
  * Генерирует класс ячейки для последующей отрисовки
@@ -17,7 +17,7 @@ export function generateCell(this: CanvasGameType, x: number, y: number) {
 
     const opened = this.openedCells[x][y] !== undefined;
 
-    const cell = new CanvasCell(
+    const cell = new Cell(
         offsetX,
         offsetY,
         this.cellSize,

@@ -1,14 +1,33 @@
-import type { CellProps } from '@/components/Cell';
-import { Cell } from '@/components/Cell';
-import { Mine } from '@/components/Mine';
+import { Mine } from '@/modules/CanvasGame/components/Mine';
 import { styleVariable } from '@/shared/constants';
 import { isDefined } from '@/utils';
 
-export interface CanvasCellProps extends CellProps {
+export interface CanvasCellProps {
+    x?: number;
+    y?: number;
+    color?: string;
+    width?: number;
+    height?: number;
     detailedMine?: boolean;
 }
 
-export class CanvasCell extends Cell {
+export class Cell {
+    /** Позиция x внутри сетки */
+    positionX: number;
+
+    /** Позиция y внутри сетки  */
+    positionY: number;
+
+    position?: number;
+
+    mined: boolean;
+
+    opened: boolean;
+
+    nearMinesCount: number;
+
+    marked = false;
+
     /** Смещение по x внутри canvas в px */
     x: number;
 
@@ -30,13 +49,13 @@ export class CanvasCell extends Cell {
         positionX?: number,
         positionY?: number,
     ) {
-        super(positionX, positionY);
-
         this.x = x;
         this.y = y;
         this.color = color;
         this.width = width;
         this.height = height;
+        this.positionX = positionX ?? 0;
+        this.positionY = positionY ?? 0;
 
         this.mined = false;
         this.opened = false;

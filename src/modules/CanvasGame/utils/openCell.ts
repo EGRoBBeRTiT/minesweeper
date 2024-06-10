@@ -43,10 +43,6 @@ export function openCell(
 
             this.showAnimation();
 
-            if (isFirstClick) {
-                this.handleStart(Date.now());
-            }
-
             const cellsCount = this.cellsPerRow * this.cellsPerColumn;
 
             if (this.openedCellsCount === cellsCount - this.minesCount) {
@@ -55,8 +51,6 @@ export function openCell(
         };
 
         if (isFirstClick) {
-            this.firstOpenedCell = position;
-
             void generateMinesPositions(
                 this.minesCount,
                 this.cellsPerRow,
@@ -69,6 +63,8 @@ export function openCell(
                 this.saveMinesCount();
 
                 doAfterGenerating();
+
+                this.handleStart(Date.now());
             });
 
             return;
