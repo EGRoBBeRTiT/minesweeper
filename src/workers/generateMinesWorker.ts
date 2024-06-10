@@ -1,4 +1,5 @@
 import { positionToXY } from '@/modules/utils';
+import { isDefined } from '@/utils';
 
 export interface GenerateMinesWorkerMessage {
     minesCount: number;
@@ -11,7 +12,12 @@ onmessage = (e) => {
     const { minesCount, cellsPerRow, cellsPerColumn, omitPosition } =
         (e.data as GenerateMinesWorkerMessage | undefined) ?? {};
 
-    if (minesCount && cellsPerRow && cellsPerColumn && omitPosition) {
+    if (
+        isDefined(minesCount) &&
+        isDefined(cellsPerRow) &&
+        isDefined(cellsPerColumn) &&
+        isDefined(omitPosition)
+    ) {
         const cellsCount = cellsPerRow * cellsPerColumn;
         const notMinesCount = cellsCount - minesCount;
 
