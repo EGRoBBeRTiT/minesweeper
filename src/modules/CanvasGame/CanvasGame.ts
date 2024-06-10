@@ -653,7 +653,7 @@ class CanvasGame {
     protected handleStart(statedTime: number) {
         this.statedTime = statedTime;
 
-        if (Number.isNaN(this.timeIntervalId)) {
+        if (!Number.isNaN(this.timeIntervalId)) {
             clearInterval(this.timeIntervalId);
         }
 

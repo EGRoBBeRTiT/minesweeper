@@ -47,6 +47,8 @@ export function openCell(
 
             if (this.openedCellsCount === cellsCount - this.minesCount) {
                 this.handleWin();
+            } else if (isFirstClick) {
+                this.handleStart(Date.now());
             }
         };
 
@@ -62,8 +64,6 @@ export function openCell(
                 this.saveMinesPositions();
 
                 doAfterGenerating();
-
-                this.handleStart(Date.now());
             });
 
             return;
