@@ -16,8 +16,8 @@ export const getCellCoordinates = (
     cellsPerRow: number,
     cellsPerColumn: number,
 ) => {
-    const positionX = Math.floor(x / cellSize + 1) - 1;
-    const positionY = Math.floor(y / cellSize + 1) - 1;
+    const positionX = Math.floor(Math.max(x - 1, 0) / cellSize);
+    const positionY = Math.floor(Math.max(y - 1, 0) / cellSize);
 
     const isXSafe = positionX >= 0 && positionX <= cellsPerRow - 1;
     const isYSafe = positionY >= 0 && positionY <= cellsPerColumn - 1;
