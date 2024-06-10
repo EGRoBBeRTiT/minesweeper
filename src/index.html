@@ -7,14 +7,30 @@
     <title>Minesweeper</title>
     <!-- <meta id="meta-theme-color" name="theme-color" content="#262039"/> -->
     <meta name="description" content="Minesweeper — это браузерная игра в сапера">
+    <!-- <script src="/loadColorTheme.js"></script> -->
 </head>
 <body>
     <div class="root">
-        <header class="header">
-            <h1>Minesweeper</h1>
-            <button id="start-button">Start</button>
-            <button id="restart-button">Restart</button>
-            <button id="redraw-button">Redraw</button>
+        <header class="header" id="header">
+            <div class="header__left">
+                <h1>Minesweeper</h1>
+                <div id="difficulty-container"></div>
+            </div>
+            <div class="header__center">
+                <div class="header__center__mine">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="6" y="6" width="12" height="12" rx="6" fill="black"/>
+                        <rect y="11.4" width="24" height="1.2" fill="black"/>
+                        <rect x="11.3999" width="1.2" height="24" fill="black"/>
+                        <rect x="5.5835" y="6.43182" width="1.2" height="16.946" transform="rotate(-45 5.5835 6.43182)" fill="black"/>
+                        <rect x="17.6226" y="5.64001" width="1.2" height="16.946" transform="rotate(45 17.6226 5.64001)" fill="black"/>
+                    </svg>
+                    <div class="header__center__mine__count">00</div>
+                 </div>
+                 <div class="header__center__smile"></div>
+                 <div class="header__center__timer">000</div>
+            </div>
+           <div class="header__right"></div>
         </header>
         <div class="container">
             <div id="canvas-container"></div>

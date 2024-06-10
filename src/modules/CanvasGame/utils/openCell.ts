@@ -22,7 +22,7 @@ export function openCell(
     const opened = this.openedCells[x][y] !== undefined;
 
     if (mined && !marked) {
-        this.gameOver();
+        this.handleGameOver();
 
         this.drawAllMines(x, y);
 
@@ -34,19 +34,46 @@ export function openCell(
     if (!opened && !marked) {
         this.clearHoverArea();
 
-        if (Number.isNaN(this.firstOpenedCell)) {
+        const isFirstClick = !this.minesPositions.length;
+
+        const doAfterGenerating = () => {
+            this.drawAllEmptyCells(x, y);
+
+            this.saveOpenedCells();
+
+            this.showAnimation();
+
+            if (isFirstClick) {
+                this.handleStart(Date.now());
+            }
+
+            const cellsCount = this.cellsPerRow * this.cellsPerColumn;
+
+            if (this.openedCellsCount === cellsCount - this.minesCount) {
+                this.handleWin();
+            }
+        };
+
+        if (isFirstClick) {
             this.firstOpenedCell = position;
 
-            this.minesPositions = generateMinesPositions(
+            void generateMinesPositions(
                 this.minesCount,
                 this.cellsPerRow,
                 this.cellsPerColumn,
                 position,
-            );
+            ).then((minesPositions) => {
+                this.minesPositions = minesPositions;
+
+                this.saveMinesPositions();
+                this.saveMinesCount();
+
+                doAfterGenerating();
+            });
+
+            return;
         }
 
-        this.drawAllEmptyCells(x, y);
-
-        this.showAnimation();
+        doAfterGenerating();
     }
 }

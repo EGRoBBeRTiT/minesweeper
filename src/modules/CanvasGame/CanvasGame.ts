@@ -1,5 +1,5 @@
 import { Canvas } from '@/components/Canvas';
-import { debounce, throttle } from '@/utils';
+import { debounce, isDefined, throttle } from '@/utils';
 import type { CanvasCell } from '@/modules/CanvasGame/components/CanvasCell';
 import {
     XYToPosition,
@@ -7,8 +7,10 @@ import {
     positionToXY,
 } from '@/modules/utils';
 import { Flag } from '@/components/Flag';
-import { BigMap, BigSet } from '@/library';
+import { BigMap } from '@/library';
 import { styleVariable } from '@/shared/constants';
+import { IndexDB } from '@/library/IndexDB';
+import { IndexDBKey } from '@/types/IndexDB.types';
 
 import {
     drawAllEmptyCells,
@@ -41,69 +43,161 @@ interface AnimationCell {
 }
 
 class CanvasGame {
-    mainCanvas = new Canvas();
+    protected mainCanvas = new Canvas();
 
-    hoverCanvas = new Canvas();
+    protected hoverCanvas = new Canvas();
 
-    openedBgCellsCanvas = new Canvas();
+    protected openedBgCellsCanvas = new Canvas();
 
-    openedCellsCanvas = new Canvas();
+    protected openedCellsCanvas = new Canvas();
 
-    markedCellsCanvas = new Canvas();
+    protected markedCellsCanvas = new Canvas();
 
-    animationCanvas = new Canvas();
+    protected animationCanvas = new Canvas();
 
-    cellSize = 0;
+    protected cellSize = 0;
 
-    cellsWidth = 0;
+    protected cellsWidth = 0;
 
-    cellsHeight = 0;
+    protected cellsHeight = 0;
 
-    cellsPerRow = 0;
+    protected cellsPerRow = 0;
 
-    cellsPerColumn = 0;
+    protected cellsPerColumn = 0;
 
-    openedCells: OpenedCellsMatrix = [];
+    protected minCellSize = 2;
 
-    minesPositions: MinesPositionsMatrix = [];
+    protected openedCells: OpenedCellsMatrix = [];
 
-    markedCells = new BigSet();
+    protected minesPositions: MinesPositionsMatrix = [];
 
-    animatingCells = new BigMap<AnimationCell>();
+    protected markedCells = new Set<number>();
 
-    firstOpenedCell = Number.NaN;
+    protected animatingCells = new BigMap<AnimationCell>();
 
-    minedCellPosition = Number.NaN;
+    protected firstOpenedCell = Number.NaN;
 
-    minesCount = 0;
+    protected minedCellPosition = Number.NaN;
 
-    minX = 0;
+    protected minesCount = 0;
 
-    maxX = 0;
+    protected openedCellsCount = 0;
 
-    minY = 0;
+    protected minX = 0;
 
-    maxY = 0;
+    protected maxX = 0;
 
-    hoveredCell?: CanvasCell | null = null;
+    protected minY = 0;
 
-    gameOvered = false;
+    protected maxY = 0;
 
-    requestAnimationId = Number.NaN;
+    protected hoveredCell?: CanvasCell | null = null;
 
-    XYToPosition(x: number, y: number) {
+    protected gameOvered = false;
+
+    protected requestAnimationId = Number.NaN;
+
+    protected statedTime = Number.NaN;
+
+    protected timeIntervalId: ReturnType<typeof setInterval> | number =
+        Number.NaN;
+
+    protected saveGameStorage: IndexDB;
+
+    public readyState: 'ready' | 'loading' = 'loading';
+
+    private loadFromStorage = false;
+
+    public loadState: 'from-storage' | 'new' = 'new';
+
+    constructor() {
+        this.saveGameStorage = new IndexDB(
+            IndexDBKey.STORE_NAME,
+            IndexDBKey.VERSION,
+            IndexDBKey.DB_NAME,
+            IndexDBKey.KEY_PATH,
+        );
+
+        const storage = this.saveGameStorage;
+
+        void Promise.all([
+            storage.get<number>(IndexDBKey.GAME_TIME),
+            storage.get<MinesPositionsMatrix>(IndexDBKey.MINES_POSITIONS),
+            storage.get<OpenedCellsMatrix>(IndexDBKey.OPENED_CELLS),
+            storage.get<Set<number>>(IndexDBKey.MARKED_CELLS_POSITIONS),
+            storage.get<number>(IndexDBKey.MINES_COUNT),
+        ]).then(
+            ([
+                gameTime,
+                minesPositions,
+                openedCells,
+                markedCells,
+                minesCount,
+            ]) => {
+                const loadFromStorage =
+                    isDefined(minesPositions) &&
+                    isDefined(openedCells) &&
+                    isDefined(minesCount);
+
+                if (loadFromStorage) {
+                    this.loadFromStorage = true;
+                    this.loadState = 'from-storage';
+                    this.minesPositions = minesPositions;
+                    this.openedCells = openedCells;
+                    this.markedCells = markedCells ?? new Set();
+                    this.statedTime = Date.now() - (gameTime ?? 0) * 1000;
+                    this.minesCount = minesCount;
+                    this.cellsPerRow = minesPositions.length;
+                    this.cellsPerColumn = minesPositions[0]?.length ?? 0;
+                }
+
+                this.readyState = 'ready';
+                this.onReady?.();
+
+                if (loadFromStorage) {
+                    this.start(
+                        this.cellsPerRow,
+                        this.cellsPerColumn,
+                        this.minesCount,
+                    );
+
+                    this.handleStart(this.statedTime);
+                }
+            },
+        );
+    }
+
+    /* Срабатывает, когда открывается первая ячейка */
+    public onStart?: () => void;
+
+    /* Срабатывает, когда все возможные ячейки открыты */
+    public onWin?: () => void;
+
+    /* Срабатывает, когда открывается ячейка с миной */
+    public onGameOver?: () => void;
+
+    /* Срабатывает, когда меняется кол-во установленных  флажков */
+    public onFlagsChange?: (flagsCount?: number) => void;
+
+    /* Срабатывает каждую секунду игрового времени */
+    public onTimeChange?: (gameTime: number) => void;
+
+    /* Срабатывает, когда игра готова к старту */
+    public onReady?: () => void;
+
+    protected XYToPosition(x: number, y: number) {
         return XYToPosition(x, y, this.cellsPerRow);
     }
 
-    positionToXY(position: number) {
+    protected positionToXY(position: number) {
         return positionToXY(position, this.cellsPerRow);
     }
 
-    generateCell(x: number, y: number) {
+    protected generateCell(x: number, y: number) {
         return generateCell.call(this, x, y);
     }
 
-    mapChunk(callback: (x: number, y: number) => void) {
+    protected mapChunk(callback: (x: number, y: number) => void) {
         for (let i = this.minX; i <= this.maxX; i++) {
             for (let j = this.minY; j <= this.maxY; j++) {
                 callback(i, j);
@@ -114,12 +208,23 @@ class CanvasGame {
     private defineProperties(
         cellsPerRow: number,
         cellsPerColumn: number,
-        minCellSize = 1,
+        minesCount: number,
+        minCellSize = 40,
     ) {
         this.cellsPerRow = cellsPerRow;
         this.cellsPerColumn = cellsPerColumn;
+        this.minCellSize = minCellSize;
+        this.minesCount = Math.min(
+            Math.max(minesCount, 2),
+            cellsPerRow * cellsPerColumn - 1,
+        );
 
-        this.openedCells = Array.from({ length: this.cellsPerRow }, () => []);
+        if (!this.loadFromStorage) {
+            this.openedCells = Array.from(
+                { length: this.cellsPerRow },
+                () => [],
+            );
+        }
 
         const canvasContainer = document.getElementById(CANVAS_CONTAINER_ID);
 
@@ -359,13 +464,17 @@ class CanvasGame {
         cellsPerRow: number,
         cellsPerColumn: number,
         minesCount: number,
-        minCellSize = 1,
+        minCellSize = 40,
     ) {
-        this.defineProperties(cellsPerRow, cellsPerColumn, minCellSize);
+        if (!this.loadFromStorage) {
+            this.destroy();
+        }
 
-        this.minesCount = Math.min(
-            Math.max(minesCount, 2),
-            cellsPerRow * cellsPerColumn - 1,
+        this.defineProperties(
+            cellsPerRow,
+            cellsPerColumn,
+            minesCount,
+            minCellSize,
         );
 
         this.mainCanvas.insertIntoElement(CANVAS_CONTAINER_ID);
@@ -375,12 +484,15 @@ class CanvasGame {
         this.openedCellsCanvas.insertIntoElement(CANVAS_CONTAINER_ID);
         this.animationCanvas.insertIntoElement(CANVAS_CONTAINER_ID);
 
-        this.drawMainCanvas();
+        this.drawAll();
 
         this.setAllListeners();
+
+        this.loadFromStorage = false;
+        this.loadState = 'new';
     }
 
-    drawMainCanvas() {
+    private drawMainCanvas() {
         this.mapChunk((x, y) => {
             const notOpened = this.openedCells[x][y] === undefined;
 
@@ -392,7 +504,7 @@ class CanvasGame {
         });
     }
 
-    drawOpenedCellsCanvas() {
+    private drawOpenedCellsCanvas() {
         this.mapChunk((x, y) => {
             const opened = this.openedCells[x][y] !== undefined;
             const mined = this.minesPositions[x]?.[y];
@@ -417,7 +529,7 @@ class CanvasGame {
         });
     }
 
-    drawMarkedCellsCanvas() {
+    protected drawMarkedCellsCanvas() {
         this.mapChunk((x, y) => {
             const position = this.XYToPosition(x, y);
             const marked = this.markedCells.has(position);
@@ -457,7 +569,7 @@ class CanvasGame {
         this.animationCanvas.context?.setTransform(a, b, c, d, e, f);
     }
 
-    translateCanvases(deltaX: number, deltaY: number) {
+    private translateCanvases(deltaX: number, deltaY: number) {
         const transform = this.mainCanvas.context?.getTransform();
 
         const currentX = transform?.e ?? 0;
@@ -490,7 +602,7 @@ class CanvasGame {
         this.setTransform(1, 0, 0, 1, transformX, transformY);
     }
 
-    clearAll() {
+    private clearAll() {
         this.mainCanvas.clear();
         this.clearHoverArea();
         this.openedBgCellsCanvas.clear();
@@ -499,18 +611,18 @@ class CanvasGame {
         this.animationCanvas.clear();
     }
 
-    drawAll() {
+    private drawAll() {
         this.drawMainCanvas();
         this.drawOpenedCellsCanvas();
         this.drawMarkedCellsCanvas();
         this.drawAnimationCells();
     }
 
-    drawAnimationCells() {
+    private drawAnimationCells() {
         return drawAnimationCells.call(this);
     }
 
-    showAnimation() {
+    protected showAnimation() {
         if (!Number.isNaN(this.requestAnimationId)) {
             cancelAnimationFrame(this.requestAnimationId);
         }
@@ -537,32 +649,137 @@ class CanvasGame {
         this.drawAll();
     }
 
-    restart() {
+    protected resetState() {
         this.clearAll();
 
         this.openedCells = Array.from({ length: this.cellsPerRow }, () => []);
         this.minesPositions = [];
+        this.firstOpenedCell = Number.NaN;
+        this.minedCellPosition = Number.NaN;
+        this.requestAnimationId = Number.NaN;
+        this.gameOvered = false;
         this.animatingCells.clear();
         this.markedCells.clear();
-        this.firstOpenedCell = Number.NaN;
-        this.gameOvered = false;
+        this.minX = 0;
+        this.minY = 0;
+        this.hoveredCell = null;
+        this.openedCellsCount = 0;
+
+        this.maxX = Math.ceil(this.mainCanvas.canvas.width / this.cellSize) - 1;
+        this.maxY =
+            Math.ceil(this.mainCanvas.canvas.height / this.cellSize) - 1;
 
         this.setTransform(1, 0, 0, 1, 0, 0);
-        this.translateCanvases(0, 0);
 
-        this.setAllListeners();
-
-        this.drawAll();
+        clearInterval(this.timeIntervalId);
     }
 
-    gameOver() {
+    restart() {
+        this.resetSave();
+        this.resetState();
+        this.drawAll();
+        this.setAllListeners();
+    }
+
+    protected handleGameOver() {
         this.animationCanvas.canvas.onmousemove = null;
         this.animationCanvas.canvas.onmousedown = null;
         this.gameOvered = true;
+        clearInterval(this.timeIntervalId);
+
+        this.onGameOver?.();
+        this.resetSave();
+    }
+
+    private saveGame(time: number) {
+        this.saveGameTime(time);
+    }
+
+    protected saveGameTime(time: number) {
+        void this.saveGameStorage.add(IndexDBKey.GAME_TIME, time, true);
+    }
+
+    protected saveMarkedCells() {
+        void this.saveGameStorage.add(
+            IndexDBKey.MARKED_CELLS_POSITIONS,
+            this.markedCells,
+            true,
+        );
+    }
+
+    protected saveOpenedCells() {
+        void this.saveGameStorage.add(
+            IndexDBKey.OPENED_CELLS,
+            this.openedCells,
+            true,
+        );
+    }
+
+    protected saveMinesPositions() {
+        void this.saveGameStorage.add(
+            IndexDBKey.MINES_POSITIONS,
+            this.minesPositions,
+            true,
+        );
+    }
+
+    protected saveMinesCount() {
+        void this.saveGameStorage.add(
+            IndexDBKey.MINES_COUNT,
+            this.minesCount,
+            true,
+        );
+    }
+
+    private resetSave() {
+        void this.saveGameStorage.clear();
+    }
+
+    protected handleStart(statedTime: number) {
+        this.statedTime = statedTime;
+
+        if (Number.isNaN(this.timeIntervalId)) {
+            clearInterval(this.timeIntervalId);
+        }
+
+        this.onStart?.();
+
+        this.timeIntervalId = setInterval(() => {
+            const currentTime = Date.now();
+
+            const diff = Math.floor((currentTime - this.statedTime) / 1000);
+
+            this.onTimeChange?.(diff);
+
+            this.saveGame(diff);
+        }, 1000);
+    }
+
+    protected handleWin() {
+        this.animationCanvas.canvas.onmousemove = null;
+        this.animationCanvas.canvas.onmousedown = null;
+        clearInterval(this.timeIntervalId);
+        this.resetSave();
+
+        this.onWin?.();
     }
 
     stop() {
         this.removeAllListeners();
+        clearInterval(this.timeIntervalId);
+    }
+
+    destroy() {
+        this.stop();
+        this.resetState();
+
+        this.mainCanvas.destroy();
+        this.hoverCanvas.destroy();
+        this.markedCellsCanvas.destroy();
+        this.openedBgCellsCanvas.destroy();
+        this.openedCellsCanvas.destroy();
+        this.animationCanvas.destroy();
+        this.resetSave();
     }
 }
 

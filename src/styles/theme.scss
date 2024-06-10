@@ -1,0 +1,70 @@
+/* stylelint-disable selector-no-qualifying-type */
+body {
+    &[color-theme='light'] {
+        color-scheme: light;
+
+        /* Colors rgb */
+        --primary-color-rgb: 0 106 255; // #006aff
+        --primary-color-hover-rgb: 51, 136, 255; // #3388ff
+        --primary-color-active-rgb: 26 121 255; // #1a79ff
+
+        /* Colors */
+        --primary-color: rgb(var(--primary-color-rgb));
+        --primary-color-hover: rgb(var(--primary-color-hover-rgb));
+        --primary-color-active: rgb(var(--primary-color-active-rgb));
+        --header-background: var(--primary-color);
+        --primary-cell-color: hsl(208deg 100% 57%);
+        --secondary-cell-color: #38a2ff;
+        --primary-opened-cell-color: #d7b899;
+        --secondary-opened-cell-color: #e5c29f;
+        --cell-hover-color: #5ab2ff;
+        --text-color-1: #1976d2;
+        --text-color-2: #388e3c;
+        --text-color-3: #d32f2f;
+        --text-color-4: #7b1fa2;
+        --text-color-5: #ff8f00;
+        --text-color-6: #fbff00;
+        --text-color-7: #6200ff;
+        --text-color-8: #fb00ff;
+        --flag-color: #e63307;
+        --flag-handle-color: #6c3c0d;
+        --mine-color: #000000;
+        --mine-color-red: #ce2900;
+        --light-color: #eaeaea;
+        --background: #d7b899;
+    }
+
+    &[color-theme='dark'] {
+        color-scheme: dark;
+
+        /* Colors rgb */
+        --primary-color-rgb: hsl(215deg 100% 40%); // #006aff
+        --primary-color-hover-rgb: 0 85 204; // #3388ff
+        --primary-color-active-rgb: 0 96 230; // #1a79ff
+
+        /* Colors */
+        --primary-color: hsl(215deg 100% 20%);
+        --primary-color-hover: hsl(215deg 100% 17%);
+        --primary-color-active: hsl(215deg 100% 18%);
+        --header-background: var(--primary-color);
+        --primary-cell-color: #005299;
+        --secondary-cell-color: #004c8f;
+        --primary-opened-cell-color: #5c4024;
+        --secondary-opened-cell-color: hsl(30deg 57% 23%);
+        --cell-hover-color: hsl(208deg 100% 24%);
+        --text-color-1: hsl(210deg 79% 15%);
+        --text-color-2: hsl(123deg 58% 15%);
+        --text-color-3: hsl(0deg 65% 15%);
+        --text-color-4: hsl(282deg 68% 15%);
+        --text-color-5: hsl(34deg 100% 15%);
+        --text-color-6: hsl(61deg 100% 15%);
+        --text-color-7: hsl(263deg 100% 15%);
+        --text-color-8: hsl(299deg 100% 15%);
+        --flag-color: hsl(12deg 94% 30%);
+        --flag-handle-color: hsl(30deg 79% 15%);
+        --mine-color: #000000;
+        --mine-color-red: hsl(12deg 100% 20%);
+        --light-color: #eaeaea;
+        --background: #5c4024;
+    }
+}

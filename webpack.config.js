@@ -7,6 +7,7 @@ module.exports = {
     target: ['web', 'es2017'],
     entry: {
         main: './src/index.ts',
+        generateMinesWorker: './src/workers/generateMinesWorker.ts',
     },
     output: {
         filename: '[name].js',

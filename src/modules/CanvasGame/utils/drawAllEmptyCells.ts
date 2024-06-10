@@ -15,6 +15,7 @@ export function drawAllEmptyCells(
 
     this.setOpenedCell(clickedX, clickedY, true);
     this.drawOpenedCell(clickedX, clickedY);
+    this.openedCellsCount++;
 
     const nearMinesCount = this.openedCells[clickedX][clickedY];
 
@@ -40,6 +41,7 @@ export function drawAllEmptyCells(
 
                 if (!mined && !opened) {
                     this.setOpenedCell(x, y, true);
+                    this.openedCellsCount++;
 
                     const nearMinesCount = this.openedCells[x][y];
 

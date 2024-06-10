@@ -20,10 +20,8 @@ export class Canvas {
         }
     }
 
-    insertIntoElement(id: string, where?: InsertPosition) {
-        document
-            .getElementById(id)
-            ?.insertAdjacentElement(where ?? 'beforeend', this.canvas);
+    insertIntoElement(id: string) {
+        document.getElementById(id)?.append(this.canvas);
     }
 
     clear() {
@@ -34,5 +32,10 @@ export class Canvas {
         const computedStyle = getComputedStyle(this.canvas);
 
         return computedStyle.getPropertyValue(property);
+    }
+
+    destroy() {
+        this.canvas.remove();
+        this.context = null;
     }
 }

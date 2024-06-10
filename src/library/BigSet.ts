@@ -54,6 +54,7 @@ export class BigSet extends Set<number> {
             set.clear();
         });
 
+        this.size = 0;
         this.setsBuffer.length = 0;
         this.setsBuffer = [];
     }

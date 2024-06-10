@@ -69,3 +69,48 @@ class Style {
 }
 
 export const styleVariable = new Style();
+
+export enum Difficulty {
+    BEGINNER = 'beginner',
+    ADVANCED = 'advanced',
+    EXPERT = 'expert',
+    IMPOSSIBLE = 'impossible',
+    CUSTOM = 'custom',
+}
+
+export const DIFFICULTIES = {
+    [Difficulty.BEGINNER]: {
+        title: '🤓 Начинающий (9×9×10)',
+        cellsPerRow: 9,
+        cellsPerColumn: 9,
+        minesCount: 10,
+        smile: '🤓',
+    },
+    [Difficulty.ADVANCED]: {
+        title: '😎 Продвинутый (16×16×40)',
+        cellsPerRow: 16,
+        cellsPerColumn: 16,
+        minesCount: 40,
+        smile: '😎',
+    },
+    [Difficulty.EXPERT]: {
+        title: '🤩 Эксперт (30×16×99)',
+        cellsPerRow: 30,
+        cellsPerColumn: 16,
+        minesCount: 99,
+        smile: '🤩',
+    },
+    [Difficulty.IMPOSSIBLE]: {
+        title: '😱 Невозможный (10000×10000×20000000)',
+        cellsPerRow: 10_000,
+        cellsPerColumn: 10_000,
+        minesCount: 20_000_000,
+        smile: '😱',
+    },
+    [Difficulty.CUSTOM]: {
+        title: 'Другой',
+        cellsPerRow: 0,
+        cellsPerColumn: 0,
+        minesCount: 0,
+    },
+} as const;

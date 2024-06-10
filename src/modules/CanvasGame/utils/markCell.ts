@@ -26,6 +26,10 @@ export function markCell(
         this.markedCells.add(position);
     }
 
+    this.saveMarkedCells();
+
+    this.onFlagsChange?.(this.markedCells.size);
+
     this.markedCellsCanvas.clear();
 
     this.drawMarkedCellsCanvas();

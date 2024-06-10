@@ -55,11 +55,11 @@ export class Mine {
                 ctx.moveTo(this.x - this.radius, this.y + this.radius);
                 ctx.lineTo(this.x + this.radius, this.y - this.radius);
 
-                ctx.moveTo(this.x, this.y - 2 * this.radius);
-                ctx.lineTo(this.x, this.y + 2 * this.radius);
+                ctx.moveTo(this.x, this.y - 2 * this.radius + 1);
+                ctx.lineTo(this.x, this.y + 2 * this.radius - 1);
 
-                ctx.moveTo(this.x - 2 * this.radius, this.y);
-                ctx.lineTo(this.x + 2 * this.radius, this.y);
+                ctx.moveTo(this.x - 2 * this.radius + 1, this.y);
+                ctx.lineTo(this.x + 2 * this.radius - 1, this.y);
 
                 ctx.stroke();
             }
