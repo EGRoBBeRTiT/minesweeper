@@ -99,11 +99,11 @@ body {
     padding-inline: var(--main-padding);
     padding-block: var(--small-padding);
 
-    // svg {
-    //     rect {
-    //         fill: var(--light-color);
-    //     }
-    // }
+    $max-screen-width: 1340px;
+
+    @media screen and (width <= #{$max-screen-width}) {
+        --header-height: 124px;
+    }
 
     h1 {
         margin: 0;
@@ -115,6 +115,10 @@ body {
         display: flex;
         gap: var(--main-text-gap);
         align-items: center;
+
+        @media screen and (width <= #{$max-screen-width}) {
+            flex-direction: column;
+        }
     }
 
     &__center {

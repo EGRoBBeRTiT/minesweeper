@@ -8,4 +8,5 @@ export enum IndexDBKey {
     KEY_PATH = 'fieldName',
     GAME_TIME = 'gameTime',
     MINES_COUNT = 'minesCount',
+    OPENED_CELLS_COUNT = 'openedCellsCount',
 }

@@ -60,7 +60,6 @@ export function openCell(
                 this.minesPositions = minesPositions;
 
                 this.saveMinesPositions();
-                this.saveMinesCount();
 
                 doAfterGenerating();
 

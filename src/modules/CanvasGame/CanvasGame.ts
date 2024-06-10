@@ -130,6 +130,7 @@ class CanvasGame {
             storage.get<OpenedCellsMatrix>(IndexDBKey.OPENED_CELLS),
             storage.get<Set<number>>(IndexDBKey.MARKED_CELLS_POSITIONS),
             storage.get<number>(IndexDBKey.MINES_COUNT),
+            storage.get<number>(IndexDBKey.OPENED_CELLS_COUNT),
         ]).then(
             ([
                 gameTime,
@@ -137,17 +138,20 @@ class CanvasGame {
                 openedCells,
                 markedCells,
                 minesCount,
+                openedCellsCount,
             ]) => {
                 const loadFromStorage =
                     isDefined(minesPositions) &&
                     isDefined(openedCells) &&
-                    isDefined(minesCount);
+                    isDefined(minesCount) &&
+                    isDefined(openedCellsCount);
 
                 if (loadFromStorage) {
                     this.loadFromStorage = true;
                     this.loadState = 'from-storage';
                     this.minesPositions = minesPositions;
                     this.openedCells = openedCells;
+                    this.openedCellsCount = openedCellsCount;
                     this.markedCells = markedCells ?? new Set();
                     this.statedTime = Date.now() - (gameTime ?? 0) * 1000;
                     this.minesCount = minesCount;
@@ -622,6 +626,11 @@ class CanvasGame {
             this.openedCells,
             true,
         );
+        void this.saveGameStorage.add(
+            IndexDBKey.OPENED_CELLS_COUNT,
+            this.openedCellsCount,
+            true,
+        );
     }
 
     protected saveMinesPositions() {
@@ -630,9 +639,6 @@ class CanvasGame {
             this.minesPositions,
             true,
         );
-    }
-
-    protected saveMinesCount() {
         void this.saveGameStorage.add(
             IndexDBKey.MINES_COUNT,
             this.minesCount,
